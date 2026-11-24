@@ -279,7 +279,7 @@ function ell(g,x,y,rx,ry,rot=0){g.beginPath();g.ellipse(x,y,Math.max(.1,rx),Math
 // ================= save =================
 const SAVE_KEY='frogCatcher.save.v1';
 const DEF=()=>({coins:0,up:{net:1,pole:1,lantern:0,basket:1},unlocked:1,level:1,journal:{},total:0,basket:{},basketVal:0,
-  settings:{music:.55,amb:.8,sfx:.8,quality:'high'},hinted:false,best:{}});
+  settings:{music:.6,amb:.8,sfx:.8,quality:'high'},hinted:false,best:{}});
 let S=DEF();
 function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;const d=JSON.parse(raw),b=DEF();
   S=Object.assign(b,d);S.up=Object.assign(DEF().up,d.up||{});if(d.up&&d.up.boots&&!d.up.pole)S.up.pole=d.up.boots;delete S.up.boots;S.settings=Object.assign(DEF().settings,d.settings||{});
@@ -1198,8 +1198,19 @@ function frame(now){
 
 // ================= audio (all synthesized) =================
 const Audio={ctx:null,
+ unlockIOS(){
+  try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
+  if(this.el)return;
+  // a looping, near-silent <audio> switches iOS to 'playback' mode so sound plays even when the ringer is on silent
+  const sr=8000,n=sr/2,b=new ArrayBuffer(44+n),v=new DataView(b);const w=(o,str)=>{for(let i=0;i<str.length;i++)v.setUint8(o+i,str.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,'data');v.setUint32(40,n,true);
+  for(let i=0;i<n;i++)v.setUint8(44+i,128+(i%2));
+  const el=this.el=document.createElement('audio');el.src=URL.createObjectURL(new Blob([b],{type:'audio/wav'}));el.loop=true;el.setAttribute('playsinline','');el.volume=.01;
+  const p=el.play();if(p&&p.catch)p.catch(()=>{this.el=null});
+ },
  init(){
-  if(this.ctx){if(this.ctx.state==='suspended')this.ctx.resume().catch(()=>{});return}
+  this.unlockIOS();
+  if(this.ctx){if(this.ctx.state!=='running')this.ctx.resume().catch(()=>{});return}
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
   let c;try{c=this.ctx=new AC()}catch(e){return}
   this.master=c.createGain();this.master.gain.value=.9;
@@ -1216,7 +1227,7 @@ const Audio={ctx:null,
   if(c.state==='suspended')c.resume().catch(()=>{});
  },
  apply(){if(!this.ctx)return;const s=S.settings,t=this.ctx.currentTime;
-  this.music.gain.setTargetAtTime(s.music*s.music*.55,t,.1);this.sfx.gain.setTargetAtTime(s.sfx*s.sfx*.9,t,.05);this.amb.gain.setTargetAtTime(s.amb*s.amb*1.0,t,.1)},
+  this.music.gain.setTargetAtTime(s.music*1.5,t,.1);this.sfx.gain.setTargetAtTime(s.sfx*s.sfx*.9,t,.05);this.amb.gain.setTargetAtTime(s.amb*s.amb*1.0,t,.1)},
  ir(sec){const c=this.ctx,n=c.sampleRate*sec,b=c.createBuffer(2,n,c.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.6)}return b},
  out(node,bus,pan){const c=this.ctx;if(pan&&c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=clamp(pan,-1,1);node.connect(p);p.connect(bus)}else node.connect(bus)},
  tone(o){const c=this.ctx;if(!c)return;const t=o.t??c.currentTime;const osc=c.createOscillator();osc.type=o.type||'sine';osc.frequency.setValueAtTime(o.f,t);
@@ -1258,10 +1269,10 @@ const Audio={ctx:null,
   const SC=[62,64,66,69,71,74,76,78,81,83];
   const st=this.step++%16;
   if(st===0){const ch=CH[this.chord++%4];const dur=16*60/68/2;
-   ch.forEach(m=>{const f=440*Math.pow(2,(m-69)/12);[-7,7].forEach(dt=>this.tone({t,f,type:'triangle',detune:dt,a:1.6,hold:dur-2.2,dur:dur+1.4,vol:.022,lp:1000,bus:this.music}))});
+   ch.forEach(m=>{const f=440*Math.pow(2,(m-69)/12);[-7,7].forEach(dt=>this.tone({t,f,type:'triangle',detune:dt,a:1.6,hold:dur-2.2,dur:dur+1.4,vol:.035,lp:1200,bus:this.music}))});
    this.tone({t,f:440*Math.pow(2,(ch[0]-12-69)/12),a:.05,dur:3.5,vol:.05,bus:this.music,lp:400})}
   if(Math.random()<(st%2===0?.42:.2)){this.mel=clamp(this.mel+randi(-2,2),0,SC.length-1);const f=440*Math.pow(2,(SC[this.mel]-69)/12);
-   this.tone({t,f,dur:1.6,a:.004,vol:.05,bus:this.music});this.tone({t,f:f*2,dur:.8,a:.004,vol:.012,bus:this.music})}
+   this.tone({t,f,dur:1.6,a:.004,vol:.09,bus:this.music});this.tone({t,f:f*2,dur:.8,a:.004,vol:.02,bus:this.music})}
   if(st===8&&Math.random()<.3){for(let i=0;i<5;i++){const f=440*Math.pow(2,(SC[4+i]+12-69)/12);this.tone({t:t+i*.07,f,dur:.7,vol:.012,bus:this.music})}}
  },
 };
@@ -1288,8 +1299,8 @@ function sfx(n,x,v=1){
  }
 }
 document.addEventListener('visibilitychange',()=>{
- if(document.hidden){if(state==='play'&&!paused)openModal('pause');saveNow();if(Audio.ctx)Audio.ctx.suspend().catch(()=>{})}
- else if(Audio.ctx)Audio.ctx.resume().catch(()=>{});
+ if(document.hidden){if(state==='play'&&!paused)openModal('pause');saveNow();if(Audio.ctx)Audio.ctx.suspend().catch(()=>{});if(Audio.el)Audio.el.pause()}
+ else{if(Audio.ctx)Audio.ctx.resume().catch(()=>{});if(Audio.el)Audio.el.play().catch(()=>{})}
 });
 addEventListener('pagehide',saveNow);
 
@@ -1298,7 +1309,7 @@ load();
 LV=getLevel(clamp(S.level,1,S.unlocked));
 addEventListener('resize',resize);
 resize();menuScene();renderMenu();
-document.addEventListener('pointerdown',()=>Audio.init(),{once:true});
+['pointerdown','touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,()=>Audio.init(),{passive:true}));
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(state==='menu')renderMenu()});
 requestAnimationFrame(frame);
 window.__fc={S,get state(){return state},startLevel,get frogs(){return frogs},get flies(){return flies},F,award,finishLevel};
