@@ -1,65 +1,53 @@
-# Frog Catcher — A Magical Night Adventure
+# Frog Catcher: A Magical Night Adventure
 
-A cozy 2D night-time catching game that runs in any modern browser (desktop and mobile, portrait and landscape).
+A cozy night-time frog catching game that runs in any modern browser on phones, tablets and computers.
 Everything (art, animation, music and night sounds) is generated in code, so the whole game is **one file: `index.html`**.
 
-## Play locally
+Play: https://portgasdkaze20.github.io/frog-catcher/
 
-The quickest way: double-click `index.html` to open it in Chrome, Safari, Edge or Firefox.
+## How to play
 
-To test on your phone over Wi-Fi, run a tiny local server from the folder:
+The farmer stands on the grass by the pond and you never walk.
+
+| | Phone and tablet | Computer |
+|---|---|---|
+| Throw the net | Tap a creature (or anywhere) | Click |
+| Perfect catch | Hold on a creature, let go when the white ring meets the gold ring | Hold the mouse button or Space |
+| Sell your basket | Tap the cart | Click the cart |
+| Goals panel | Tap it to collapse or expand | Click |
+| Menus | Top-right buttons | B shop, J journal, Esc pause, F fullscreen |
+
+- **Perfect** catches give +50% coins. Rare frogs need good timing. Prefer no timing? Choose **Simple tap** in Settings.
+- **Difficulty**: Relaxed, Adaptive (recommended) or Challenging. Adaptive quietly adjusts to how you're doing over your last 20 throws.
+- Each night has a main goal and optional goals, and stars come from completing them.
+- The weather changes: clear, foggy, rainy, full moon and firefly nights, each with different creatures.
+- Collect all 15 species in the Night Journal, earn milestones, upgrade your gear, and decorate your pond.
+
+Progress saves automatically in your browser. Each player and each device has its own save.
+
+## Run locally
+
+Double-click `index.html`, or serve the folder:
 
 ```bash
-cd frog-catcher
-python3 -m http.server 8000
-# or: npx serve .
+python3 -m http.server 8000   # then open http://localhost:8000
 ```
 
-Then open `http://localhost:8000` on your computer, or `http://<your-computer-IP>:8000` on a phone on the same Wi-Fi network.
+## Deploy
 
-## Deploy to a website
+GitHub Pages serves this repo from the `main` branch root (Settings → Pages). Push to `main` and the site updates in a minute or two.
 
-It is a static site, so any static host works. Upload `index.html`:
+## Project notes
 
-- **Netlify Drop**: drag the `frog-catcher` folder onto https://app.netlify.com/drop
-- **GitHub Pages**: push the folder to a repo, then Settings → Pages → deploy from the `main` branch root
-- **Vercel**: `npx vercel` inside the folder
-- **itch.io**: zip the folder, create a new HTML project, upload the zip and tick "This file will be played in the browser"
-
-## Controls
-
-The farmer stands still on the grass. You never walk.
-
-| | Desktop | Mobile |
-|---|---|---|
-| Shoot the net | Click anywhere | Tap anywhere |
-| Sell your basket | Click the cart | Tap the cart |
-| Lantern light (from Lantern Lv 1) | Follows the mouse | Glows where you last tapped |
-| Shop / Inventory / Pause | B / I / Esc | Top-right buttons |
-
-## How it plays
-
-- Catch frogs, fireflies and the glowing items bats drop. Coins are added the moment you catch something.
-- Your **basket** has limited space. When it's full, tap the **cart** next to the farmer to sell it for a 20% bonus.
-- Fill the progress bar to finish the night and earn a completion reward. Nights 1–5 add new creatures and new challenges, then the Endless Nights keep going and get a little faster each time.
-- Upgrades: **Net** (range, swing speed, luck with rare frogs, a magic glow), **Telescopic Pole** (the net flies out faster and reloads sooner, which matters for frogs that run away), **Lantern** (draws fireflies to you, lights the swamp, brings out rare insects), **Basket** (holds more).
-
-| Night | New things |
-|---|---|
-| 1 Peaceful Pond | Common frogs, fireflies, bats carrying Moonberries |
-| 2 Firefly Garden | Hopper frogs, Blinker fireflies (catch them only while they glow) |
-| 3 Midnight Forest | Bush Peepers hiding in the bushes, Azure fireflies, more bats, Star Shards |
-| 4 Moonlight Swamp | Darkness and mist, Swamp Shades (only visible in your lantern light), Dart frogs that flee from a slow net |
-| 5 Magical Night | Golden frogs (100), Moon frogs (250, they teleport), Star fireflies, aurora |
-
-Progress saves automatically in the browser (localStorage), so it's still there after a refresh. Settings → Reset progress clears it.
-
-## Code map (inside `index.html`)
-
-- `SPEC`, `LEVELS`, `THEMES`, `UPG`: creature rewards, level setup, colour themes and upgrade prices. Change these to rebalance the game.
-- `layout()` / `buildBG()`: responsive scene layout and the painted background (redrawn when the screen size changes).
-- `updateFrog`, `updateFly`, `updateBat`, `updateItem`: creature behaviours.
-- `shoot`, `updateFarmer`, `resolveCatch`, `collect`, `award`, `deliver`: the telescopic net and the economy.
-- `moonUpdate` / `drawMoon`: the moon crossing the sky with its halo, rays and drifting clouds; the starfield scrolls slowly in `render()`.
-- `drawFarmer`, `drawFrog`, `drawBat`, `render()`: all drawing on the 2D canvas.
-- `Audio`: Web Audio synth for the music, crickets, katydids, frogs, owl, wind and sound effects. Volumes are in Settings.
+- `AUDIT.md` covers the review of v1: features, bugs, gaps and performance.
+- `CHANGELOG.md` lists everything added in v2.
+- Branch `backup/v1` holds the original version.
+- Code map inside `index.html`:
+  - `SPEC`: per-species settings (speed, jump, detect, escape, rarity, diff, reward, spawn).
+  - `LEVELS`: nights, weather and goals.
+  - `UPG` and `DECOR`: the shop.
+  - `dfx()` / `adaptTick()`: adaptive difficulty.
+  - `pressStart`, `pressEnd`, `throwNet`, `resolveCatch`: catching.
+  - `updateWeather`: night conditions.
+  - `render()`: drawing.
+  - `Audio`: synthesized sound.
